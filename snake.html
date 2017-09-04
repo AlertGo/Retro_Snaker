@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style type="text/css">
+		html,body,div,p,span {margin: 0;padding: 0;}
+		html,body {width: 100%;height: 100%;display: flex;align-items: center;justify-content: center;background-color: #999}
+		#Game_range {display: inline-block;background-color: #222;font-size: 0;overflow: hidden;position: relative;}
+		.Rangec {width: 100%;height: 100%;position: absolute;left: 0;top: 0;z-index: 999;}
+		#Snake {background-color: green;z-index: 1000}
+		p {background-color: red; position: absolute;left: 0;top: 0;z-index: 999; border: none;border-left: 1px solid #999;border-top: 1px solid #999; box-sizing: border-box;transition: .1s}
+		p.index_color{background-color: yellow;}
+	</style>
+</head>
+<body>
+	<!-- 游戏范围  -->
+	<div id="Game_range"></div>
+<script type="text/javascript">
+	const Range = document.getElementById("Game_range") ;
+	const Range_child = [];
+	let Rangec = null ;
+	let Snake = null ;
+	let Timer = null ;
+	// 总数
+	let lattices = null;
+	// 跑动方式 37，38，39，40
+	let Run_mode = 39 ;
+	// 基本大小
+	let SnakeW = 25 ;
+	let boo = true ;
+	// 食物索引
+	let index = 0 ;
+	let run_timer = 200 ;
+
+
+	// 游戏基本表格
+	// 参数配置 游戏范围最大宽,游戏范围最大高,格子大小
+	const createLattice = (maxW,maxH,latticeW) => {
+		lattices = (maxW * maxH) / (latticeW * latticeW) ;
+		//跑动范围
+		Rangec = document.createElement('div') ;
+		Rangec.className = "Rangec" ; 
+		// 默认显示蛇身+头
+		for(let i = 0; i < 3; i++){
+			var Snake_body = document.createElement("p")
+			Snake_body.style.cssText = `width: ${ latticeW }px; 
+				height: ${ latticeW }px;` ;
+			if(i == 0){
+				//创建蛇头
+				Snake_body.style.left = 2 * latticeW + 'px' ;
+				Snake_body.id = 'Snake' ;
+				Snake = Snake_body ;
+			}else if(i == 1){
+				Snake_body.style.left = latticeW + 'px' ;
+			}
+			Rangec.appendChild(Snake_body)
+		}
+
+		Range.appendChild(Rangec)
+		Range.style.cssText = `width: ${ maxW }px;
+			height: ${ maxH }px` ;
+		// 棋盘
+		for(let i = 0; i < lattices; i++){
+			let Lattice = document.createElement("div") ;
+			Lattice.style.cssText = `width: ${ latticeW }px;
+				height: ${ latticeW }px;
+				display: inline-block;
+				border: none;border-left: 1px solid #999;
+				border-top: 1px solid #999;
+				box-sizing: border-box;` ;
+			Range_child.push(Lattice) ;
+			Range.appendChild(Lattice) ;
+		}
+
+		// 创建食物
+		CreateFood()
+
+	}
+	createLattice(800,500,SnakeW) ;
+	auto(run_timer) ;
+	//蛇身默认跟随
+	function SnakeFollow (){
+		let Snake_length = Rangec.children.length ;
+		for (var i = Snake_length - 1; i > 0; i--) {
+            Rangec.children[i].style.left = Rangec.children[i-1].offsetLeft + 'px' ;
+            Rangec.children[i].style.top = Rangec.children[i-1].offsetTop + 'px' ;
+        }
+	}
+	function CreateBody (){
+		//增加蛇身
+		let new_body = document.createElement('p') ;
+		new_body.style.cssText = `width:${SnakeW}px;
+			height:${SnakeW}px;
+			transition: 0s;
+			left: ${-SnakeW}px`;
+		Rangec.appendChild(new_body) ;
+		switch(Rangec.children.length){
+			case 5  :
+				clearInterval(Timer) ;
+				auto(190) ;				
+				break ;
+			case 6 :
+				clearInterval(Timer) ;
+				auto(180)
+				break ;
+			case 7 :
+				clearInterval(Timer) ;
+				auto(160)
+				break ;
+			case 8 : 
+				clearInterval(Timer) ;
+				auto(140)
+				break ;
+			case 9 :
+				clearInterval(Timer) ;
+				auto(120)
+				break ;
+			case 10 :
+				clearInterval(Timer) ;
+				auto(100)
+				break ;
+		}
+	}
+	//创建食物 
+	function CreateFood (){
+		index = Math.floor(Math.random() * lattices) ;
+		Range_child[index].style.backgroundColor = 'yellow' ;
+		for(var i = 0; i < Rangec.children.length; i++ ){
+			if(Range_child[index].offsetLeft == Rangec.children[i].offsetLeft && Range_child[index].offsetTop == Rangec.children[i].offsetTop){
+				Range_child[index].style.backgroundColor = '#222' ;
+				CreateFood() ;
+			}
+
+		}
+
+	}
+
+	document.onkeydown = (ev) => {
+		let e = ev || window.event ;
+		if(boo){
+			boo = !boo
+			if(e.keyCode == 37 || e.keyCode == 38 || e.keyCode == 39 || e.keyCode ==40){
+				if(Run_mode == 39){
+					e.keyCode !== 37 && (Run_mode = e.keyCode)
+				}else if(Run_mode == 37){
+					e.keyCode !== 39 && (Run_mode = e.keyCode)
+				}else if(Run_mode == 38){
+					e.keyCode !== 40 && (Run_mode = e.keyCode)
+				}else if(Run_mode == 40){
+					e.keyCode !== 38 && (Run_mode = e.keyCode)
+				}
+			}
+		}
+	}
+
+	function auto(time){
+		Timer=setInterval(function (){
+			var P = new Promise(function (res,err){
+				boo = true ;
+				SnakeFollow() ;
+				Rangec.children[Rangec.children.length-1].style.transition = '.1s' ;
+
+				return res(null) ;
+
+			}).then(function (){
+				if(Run_mode == 39){
+					// 右 
+					Snake.style.left = Snake.offsetLeft + SnakeW + "px" ;
+					if(Snake.offsetLeft + SnakeW == Rangec.offsetWidth) {
+                        clearInterval(Timer) ;
+                        alert("GAME OVER!!") ;
+                        return ;
+                    }
+
+				}else if(Run_mode == 40){
+					// 下
+					Snake.style.top = Snake.offsetTop + SnakeW + "px" ;
+					if(Snake.offsetTop + SnakeW == Rangec.offsetHeight){
+						clearInterval(Timer) ;
+                        alert("GAME OVER!!") ;
+                        return ;
+					}
+				}else if(Run_mode == 37){
+					// 左
+					Snake.style.left = Snake.offsetLeft - SnakeW + "px" ;
+					if(Snake.offsetLeft == 0){
+						clearInterval(Timer) ;
+                        alert("GAME OVER!!") ;
+                        return ;
+					} 
+				}else if(Run_mode == 38){
+					// 上
+					Snake.style.top = Snake.offsetTop - SnakeW + "px" ;
+					if(Snake.offsetTop == 0){
+						clearInterval(Timer) ;
+                        alert("GAME OVER!!") ;
+                        return ;
+					} 
+				}
+				for(var i = 1; i < Rangec.children.length; i++ ){
+					if(Snake.offsetLeft == Rangec.children[i].offsetLeft && Snake.offsetTop == Rangec.children[i].offsetTop){
+						
+						alert(1) ;
+						clearInterval(Timer) ;
+						return ;
+					}
+
+				}
+				//吃掉食物后
+				if(Snake.offsetLeft == Range_child[index].offsetLeft && Snake.offsetTop == Range_child[index].offsetTop){
+					Range_child[index].style.backgroundColor = '#333' ;
+					//创建蛇身 
+					CreateBody() ;
+					//创建食物
+					CreateFood() ;
+				}
+
+
+			})
+		},time)
+	}
+</script>
+</body>
+</html>
